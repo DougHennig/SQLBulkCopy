@@ -1,0 +1,5 @@
+*.FXP
+*.fxp
+Source/.vs/*
+Source/SMTPLibrary/bin/*
+Source/SMTPLibrary/obj/*
