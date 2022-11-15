@@ -54,6 +54,60 @@ endtry
         sqldisconnect(lnHandle)
     endif
     ```
+* Empty date and datetime values don't exist in SQL Server; they're bulk loaded as 1899-12-30, so you'll likely want those converted to NULL. Also, if you upsized character fields as varchar, trailing spaces aren't trimmed when bulk loading. The following code executed after bulk loading takes care of both issues.
+
+    ```foxpro
+    use (lcTable)
+    lnTotalFields = afields(laFields)
+    llFirst       = .T.
+    lcFixDateSQL  = ''
+    lcVarcharSQL  = ''
+    for lnFieldNo = 1 to lnTotalFields
+    	lcFieldName = laFields[lnFieldNo, 1]
+    	lcFieldType = laFields[lnFieldNo, 2]
+    	do case
+    		case lcFieldType $ 'DT'
+    			text to lcFixDateSQL noshow textmerge pretext 2
+    			update [<<lcTable>>] set [<<lcFieldName>>] = null where [<<lcFieldName>>] = '1899-12-30'
+    			
+    			endtext
+    		case lcFieldType = 'C' and llFirst
+    			text to lcVarcharSQL noshow textmerge pretext 2
+    			update [<<lcTable>>] set [<<lcFieldName>>] = RTRIM([<<lcFieldName>>])
+    			endtext
+    			llFirst = .F.
+    		case lcFieldType = 'C'
+    			text to lcVarcharSQL additive noshow textmerge pretext 2
+    			, [<<lcFieldName>>] = RTRIM([<<lcFieldName>>])
+    			endtext
+    	endcase
+    next
+    use
+    
+    * Execute the scripts.
+    
+    if not empty(lcFixDateSQL + lcVarcharSQL)
+    	lnHandle = sqlstringconnect('driver=SQL Server;' + lcConnString)
+    	if lnHandle > 0
+    		sqlsetprop(lnHandle, 'QueryTimeOut', 0)
+    		if not empty(lcFixDateSQL)
+    			lnResult = sqlexec(lnHandle, lcFixDateSQL)
+    			if lnResult < 0
+    			* handle error
+    			endif
+    		endif
+    		if not empty(lcVarcharSQL)
+    			lnResult = sqlexec(lnHandle, lcVarcharSQL)
+    			if lnResult < 0
+    			* handle error
+    			endif
+    		endif not empty(lcVarcharSQL)
+    	    sqldisconnect(lnHandle)
+    	else
+    	* handle error
+    	endif
+    endif
+    ```
 
 ## Releases
 
