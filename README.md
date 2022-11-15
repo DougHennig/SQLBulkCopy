@@ -102,7 +102,7 @@ endtry
     			* handle error
     			endif
     		endif not empty(lcVarcharSQL)
-    	    sqldisconnect(lnHandle)
+    		sqldisconnect(lnHandle)
     	else
     	* handle error
     	endif
