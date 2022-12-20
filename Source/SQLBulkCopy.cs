@@ -56,9 +56,7 @@ namespace SQLBulkCopy
                 // Open the source connection.
                 sourceConnection.Open();
 
-                // Create the command objects we'll need, one for getting the record count and one for reading from
-                // the source table.
-                string countSQL = "select count(*) from " + sourceTable;
+                // Create the command object we'll need for reading from the source table.
                 string readSQL = "select * from " + sourceTable;
                 IDbCommand commandSourceData;
                 if (useODBC)
@@ -78,13 +76,12 @@ namespace SQLBulkCopy
                 IDataReader reader = commandSourceData.ExecuteReader();
 
                 // Set up the bulk copy object. 
-                //using (SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection))
                 using (SqlBulkCopy bulkCopy = new SqlBulkCopy(DestinationConnectionString, SqlBulkCopyOptions.TableLock))
                 {
                     bulkCopy.DestinationTableName = destinationTable;
                     bulkCopy.BulkCopyTimeout = 0;   // no timeout
 
-                    // Copy from the source to the destination and perform a final count on the destination table.
+                    // Copy from the source to the destination.
                     try
                     {
                         bulkCopy.WriteToServer(reader);
@@ -99,29 +96,6 @@ namespace SQLBulkCopy
                         // at the end of the using block.
                         reader.Close();
                     }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Executes a SQL statement.
-        /// </summary>
-        /// <param name="statement">
-        /// The SQL statement to execute.
-        /// </param>
-        public void ExecuteStatement(string statement)
-        {
-            using (SqlConnection destinationConnection = new SqlConnection(DestinationConnectionString))
-            {
-                destinationConnection.Open();
-                SqlCommand command = new SqlCommand(statement, destinationConnection);
-                try
-                {
-                    command.ExecuteNonQuery();
-                }
-                catch (Exception)
-                {
-                    throw;
                 }
             }
         }
