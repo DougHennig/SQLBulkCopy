@@ -41,7 +41,7 @@ endtry
 * Create scripts to replace empty dates with null and strip spaces from
 * character columns.
 
-use (lcTable)
+use (addbs(lcSource) + lcTable)
 lnTotalFields = afields(laFields)
 llFirst       = .T.
 lcFixDateSQL  = ''
